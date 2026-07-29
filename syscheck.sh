@@ -1,4 +1,14 @@
 #!/bin/bash
+if [ "$1" == "--help" ]; then
+  echo "Usage: bash syscheck.sh [OPTION]"
+  echo ""
+  echo "Options:"
+  echo "  --help    Show this help message"
+  echo "  (no option) Run full system check + backup"
+  exit 0
+fi
+
+
 echo "----- Current Date & Time -----"
 date
 
