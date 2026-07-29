@@ -32,7 +32,14 @@ fi
 
 echo "----- Creating Backup -----"
 backup_folder=~/projects/syscheck/backups
-mkdir -p "$backup_folder"
-timestamp=$(date +%Y-%m-%d_%H-%M-%S)
-tar -czf "$backup_folder/backup_$timestamp.tar.gz" syscheck.sh
-echo "Backup saved to: $backup_folder/backup_$timestamp.tar.gz"
+
+if ! mkdir -p "$backup_folder"; then
+  echo "❌ ERROR: Could not create backup folder. Skipping backup."
+else
+  timestamp=$(date +%Y-%m-%d_%H-%M-%S)
+  if tar -czf "$backup_folder/backup_$timestamp.tar.gz" syscheck.sh; then
+    echo "✅ Backup saved to: $backup_folder/backup_$timestamp.tar.gz"
+  else
+    echo "❌ ERROR: Backup failed to create."
+  fi
+fi
