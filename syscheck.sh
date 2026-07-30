@@ -8,6 +8,10 @@ if [ "$1" == "--help" ]; then
   exit 0
 fi
 
+log_file=~/projects/syscheck/log.txt
+echo "----------------------------------------" >> "$log_file"
+echo "Run started: $(date)" >> "$log_file"
+
 
 echo "----- Current Date & Time -----"
 date
@@ -35,11 +39,14 @@ backup_folder=~/projects/syscheck/backups
 
 if ! mkdir -p "$backup_folder"; then
   echo "❌ ERROR: Could not create backup folder. Skipping backup."
+  echo "ERROR: Could not create backup folder" >> "$log_file"
 else
   timestamp=$(date +%Y-%m-%d_%H-%M-%S)
   if tar -czf "$backup_folder/backup_$timestamp.tar.gz" syscheck.sh; then
     echo "✅ Backup saved to: $backup_folder/backup_$timestamp.tar.gz"
+    echo "SUCCESS: Backup created - backup_$timestamp.tar.gz" >> "$log_file"
   else
     echo "❌ ERROR: Backup failed to create."
+    echo "ERROR: Backup creation failed" >> "$log_file"
   fi
 fi
