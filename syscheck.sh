@@ -1,62 +1,52 @@
-# syscheck 🖥️
-
-A lightweight Bash CLI tool for system monitoring and automated backups — built while learning Linux/Bash scripting.
-
-## Features
-- 📅 Displays current date, time, and working directory
-- 📁 Lists files in the current folder
-- 💾 Shows disk usage
-- ⚠️ Warns if disk usage is 80% or higher
-- 🗄️ Creates timestamped, compressed backups
-- 📝 Logs every run with timestamps to `log.txt`
-- 🎛️ Supports `--info-only` and `--backup-only` modes
-- ❌ Handles errors gracefully (e.g. failed backup folder creation)
-
-## Example Output
-```
------ Current Date & Time -----
-Thu Jul 30 18:48:52 IST 2026
------ Disk Usage -----
-Filesystem            Size  Used Avail Use% Mounted on
-C:/Program Files/Git  475G  189G  286G  40% /
------ Disk Space Check -----
-✅ Disk usage is at 40% — looking fine.
------ Creating Backup -----
-✅ Backup saved to: backups/backup_2026-07-30_18-48-56.tar.gz
-```
-
-## How to Run
-```bash
-git clone https://github.com/sinchanas034/syscheck.git
-cd syscheck
-bash syscheck.sh
-```
-
-## Usage Options
-```bash
-bash syscheck.sh                # Run full check + backup
-bash syscheck.sh --info-only    # Show system info only
-bash syscheck.sh --backup-only  # Run backup only
-bash syscheck.sh --help         # Show usage instructions
-```
-
-## Requirements
-- Bash (Linux, macOS, or Git Bash on Windows)
-
-## Why I Built This
-I'm learning Linux and Bash scripting, and wanted a small real project instead of just tutorials. This tool taught me file permissions, conditionals, error handling, logging, command-line arguments, and Git/GitHub workflows.
-
-## Roadmap
-- [x] Basic system info
-- [x] Backup automation
-- [x] `--help` flag
-- [x] Disk space warning
-- [x] Error handling
-- [x] Logging
-- [x] `--info-only` / `--backup-only` modes
-- [ ] Colored terminal output
-- [ ] Backup rotation (auto-delete old backups)
-- [ ] Configurable backup target folder
-
-## License
-MIT
+#!/bin/bash
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+if [ "$1" == "--help" ]; then
+  echo "Usage: bash syscheck.sh [OPTION]"
+  echo ""
+  echo "Options:"
+  echo "  --help          Show this help message"
+  echo "  --info-only     Show system info only, skip backup"
+  echo "  --backup-only   Run backup only, skip system info"
+  echo "  (no option)     Run full system check + backup"
+  exit 0
+fi
+log_file=~/projects/syscheck/log.txt
+echo "----------------------------------------" >> "$log_file"
+echo "Run started: $(date)" >> "$log_file"
+if [ "$1" != "--backup-only" ]; then
+  echo "----- Current Date & Time -----"
+  date
+  echo "----- Current Folder -----"
+  pwd
+  echo "----- Files in this folder -----"
+  ls -la
+  echo "----- Disk Usage -----"
+  df -h 2>/dev/null || echo "df not fully supported in Git Bash - showing folder size instead:"
+  du -sh ~ 2>/dev/null
+  echo "----- Disk Space Check -----"
+  usage=$(df / | tail -1 | grep -oP '\d+(?=%)')
+  if [ "$usage" -ge 80 ]; then
+    echo -e "${RED}WARNING: Disk usage is at ${usage}% - running low on space!${NC}"
+  else
+    echo -e "${GREEN}Disk usage is at ${usage}% - looking fine.${NC}"
+  fi
+fi
+if [ "$1" != "--info-only" ]; then
+  echo "----- Creating Backup -----"
+  backup_folder=~/projects/syscheck/backups
+  if ! mkdir -p "$backup_folder"; then
+    echo -e "${RED}ERROR: Could not create backup folder. Skipping backup.${NC}"
+    echo "ERROR: Could not create backup folder" >> "$log_file"
+  else
+    timestamp=$(date +%Y-%m-%d_%H-%M-%S)
+    if tar -czf "$backup_folder/backup_$timestamp.tar.gz" syscheck.sh; then
+      echo -e "${GREEN}Backup saved to: $backup_folder/backup_$timestamp.tar.gz${NC}"
+      echo "SUCCESS: Backup created - backup_$timestamp.tar.gz" >> "$log_file"
+    else
+      echo -e "${RED}ERROR: Backup failed to create.${NC}"
+      echo "ERROR: Backup creation failed" >> "$log_file"
+    fi
+  fi
+fi
